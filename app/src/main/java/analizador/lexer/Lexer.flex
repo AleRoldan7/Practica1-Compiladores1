@@ -1,6 +1,18 @@
 package analizador.lexer;
 
+
 %%
+
+%{
+    StringBuilder resultado = new StringBuilder();
+
+    public String getResultado() {
+        return resultado.toString();
+    }
+%}
+
+
+
 %public
 %unicode
 %class Lexer
@@ -25,17 +37,17 @@ COMENTARIO = "#"[^(\r\n)]*
 {DIGITO}+(\.{DIGITO}+)?          {System.out.println("Decimal: " + yytext());}
 
 /*PALABRAS RESERVADAS*/
-"INICIO"                                {System.out.println("PALABRA RESERVADA: " + yytext());}
-"FIN"                                   {System.out.println("PALABRA RESERVADA: " + yytext());}
-"SI"                                    {System.out.println("PALABRA RESERVADA: " + yytext());}
-"ENTONCES"                              {System.out.println("PALABRA RESERVADA: " + yytext());}
-"MIENTRAS"                              {System.out.println("PALABRA RESERVADA: " + yytext());}
-"FINSI"                                 {System.out.println("PALABRA RESERVADA: " + yytext());}
-"FINMIENTRAS"                           {System.out.println("PALABRA RESERVADA: " + yytext());}
-"HACER"                                 {System.out.println("PALABRA RESERVADA: " + yytext());}
-"MOSTRAR"                               {System.out.println("PALABRA RESERVADA: " + yytext());}
-"LEER"                                  {System.out.println("PALABRA RESERVADA: " + yytext());}
-"VAR"                                   {System.out.println("PALABRA RESERVADA: " + yytext());}
+"INICIO"                                {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"FIN"                                   {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"SI"                                    {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"ENTONCES"                              {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"MIENTRAS"                              {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"FINSI"                                 {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"FINMIENTRAS"                           {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"HACER"                                 {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"MOSTRAR"                               {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"LEER"                                  {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
+"VAR"                                   {resultado.append("PALABRA RESERVADA: ").append(yytext()).append("\n");}
 
 
 /*SIMBOLOS*/
