@@ -1,15 +1,12 @@
 package com.example.practica1_compi1
 
-import analizador.lexer.Lexer
+import analizador.analizador.Lexer
+import analizador.analizador.Parser
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import androidx.navigation.fragment.findNavController
 import com.example.practica1_compi1.databinding.FragmentFirstBinding
 import java.io.StringReader
 
@@ -37,28 +34,20 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val etEntrada = view.findViewById<EditText>(R.id.etEntrada)
-        val btnAnalizar = view.findViewById<Button>(R.id.btnAnalizar)
-        val tvResultado = view.findViewById<TextView>(R.id.tvResultado)
+        binding.btnAnalizar.setOnClickListener {
 
-        btnAnalizar.setOnClickListener {
-
-            tvResultado.text = "Se presionooooo"
+            val entrada = binding.etEntrada.text.toString()
 
             try {
-                val texto = etEntrada.text.toString()
+                val lexer = Lexer(StringReader(entrada))
+                val parser = Parser(lexer)
 
-                val lexer = Lexer(StringReader(texto))
+                parser.parse()
 
-                while (lexer.yylex() != Lexer.YYEOF) {
-
-                }
-
-                tvResultado.text = lexer.getResultado()
-
+                binding.tvResultado.text = "Si funcionooooo"
 
             } catch (e: Exception) {
-                tvResultado.text = "Error: ${e.message}"
+                binding.tvResultado.text = "Error sintactico"
             }
         }
     }

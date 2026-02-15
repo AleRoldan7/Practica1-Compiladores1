@@ -1,0 +1,41 @@
+package analizador.analizador;
+
+import java_cup.runtime.Symbol;
+
+/* ===== TERMINALES ===== */
+
+terminal INICIO, FIN, SI, ENTONCES, MIENTRAS, FINSI, FINMIENTRAS;
+terminal HACER, MOSTRAR, LEER, VAR;
+
+terminal SUMA, RESTA, MULTI, DIVISION;
+terminal IGUAL, IGUALIGUAL, DIFERENTE;
+terminal MAYOR, MENOR, MAYORIGUAL, MENORIGUAL;
+terminal AND, OR;
+
+terminal PARENTESIS_ABRE, PARENTESIS_CIERRA;
+
+terminal ENTERO, DECIMAL;
+terminal CADENA, COMENTARIO, ERROR;
+
+terminal VARIABLE;
+
+/* ===== NO TERMINALES ===== */
+
+non terminal programa;
+non terminal declaracion;
+non terminal valor;
+
+start with programa;
+
+/* ===== GRAMATICA ===== */
+
+programa ::= declaracion
+           ;
+
+declaracion ::= VAR VARIABLE IGUAL valor
+                {: System.out.println("Declaracion correcta"); :}
+              ;
+
+valor ::= ENTERO
+        | DECIMAL
+        ;

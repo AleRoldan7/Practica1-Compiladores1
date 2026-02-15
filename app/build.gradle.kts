@@ -46,4 +46,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("com.github.vbmacher:java-cup-runtime:11b")
+
+
+
 }
