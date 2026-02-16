@@ -25,4 +25,10 @@
                 android:id="@+id/action_SecondFragment_to_FirstFragment"
                 app:destination="@id/FirstFragment"/>
     </fragment>
+
+    <fragment
+            android:id="@+id/diagramaFragment"
+            android:name="com.example.practica1_compi1.DiagramaFragment"
+            android:label="Diagrama" />
+
 </navigation>

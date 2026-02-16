@@ -24,13 +24,23 @@ terminal VARIABLE;
 non terminal programa;
 non terminal declaracion;
 non terminal valor;
+non terminal sentencia;
+non terminal ciclo;
+non terminal estructuraSI;
+non terminal condicion;
+non terminal mostrar;
+non terminal leer;
 
 start with programa;
 
 /* ===== GRAMATICA ===== */
 
-programa ::= declaracion
+
+programa ::= programa sentencia
+           | sentencia
            ;
+
+
 
 declaracion ::= VAR VARIABLE IGUAL valor
                 {: System.out.println("Declaracion correcta"); :}
@@ -38,4 +48,30 @@ declaracion ::= VAR VARIABLE IGUAL valor
 
 valor ::= ENTERO
         | DECIMAL
+        ;
+
+sentencia ::= declaracion
+            | estructuraSI
+            | ciclo
+            | mostrar
+            | leer
+            ;
+
+estructuraSI ::= SI condicion ENTONCES programa FINSI;
+
+condicion ::= PARENTESIS_ABRE VARIABLE MENOR VARIABLE PARENTESIS_CIERRA
+            | PARENTESIS_ABRE VARIABLE MAYOR VARIABLE PARENTESIS_CIERRA
+            | PARENTESIS_ABRE VARIABLE MENORIGUAL VARIABLE PARENTESIS_CIERRA
+            | PARENTESIS_ABRE VARIABLE MAYORIGUAL VARIABLE PARENTESIS_CIERRA
+            | PARENTESIS_ABRE VARIABLE IGUALIGUAL VARIABLE PARENTESIS_CIERRA
+            ;
+
+ciclo ::= MIENTRAS condicion HACER programa FINMIENTRAS;
+
+mostrar ::= MOSTRAR declaracion
+           | MOSTRAR valor
+           | MOSTRAR CADENA
+           ;
+
+leer ::= LEER VARIABLE
         ;
