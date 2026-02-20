@@ -21,57 +21,105 @@ terminal VARIABLE;
 
 /* ===== NO TERMINALES ===== */
 
-non terminal programa;
-non terminal declaracion;
-non terminal valor;
-non terminal sentencia;
-non terminal ciclo;
-non terminal estructuraSI;
-non terminal condicion;
-non terminal mostrar;
-non terminal leer;
+
+non terminal List<Instrucciones> programa;
+non terminal Instrucciones declaracion;
+non terminal String valor;
+non terminal Instrucciones sentencia;
+non terminal Instrucciones ciclo;
+non terminal Instrucciones estructuraSI;
+non terminal String condicion;
+non terminal Instrucciones mostrar;
+non terminal Instrucciones leer;
 
 start with programa;
 
-/* ===== GRAMATICA ===== */
+//* GRAMATICA */
 
 
-programa ::= programa sentencia
-           | sentencia
-           ;
+ programa ::= programa:p sentencia:s
+ {:
+     p.add(s);
+     RESULT = p;
 
+ :}
+ | sentencia:s
+ {:
+     List<Instrucciones> lista = new ArrayList<>();
+     lista.add(s);
+     RESULT = lista;
+ :}
+ ;
 
+ /* SENTENCIAS */
 
-declaracion ::= VAR VARIABLE IGUAL valor
-                {: System.out.println("Declaracion correcta"); :}
-              ;
+ sentencia ::= declaracion:d {: RESULT = d; :}
+             | mostrar:m     {: RESULT = m; :}
+             | leer:l        {: RESULT = l; :}
+             | estructuraSI:s {: RESULT = s; :}
+             | ciclo:c       {: RESULT = c; :}
+             | INICIO        {: RESULT = new Inicio(); :}
+             | FIN           {: RESULT = new Fin(); :}
+ ;
 
-valor ::= ENTERO
-        | DECIMAL
-        ;
+ /* DECLARACION */
 
-sentencia ::= declaracion
-            | estructuraSI
-            | ciclo
-            | mostrar
-            | leer
-            ;
+ declaracion ::= VAR VARIABLE:v IGUAL valor:val
+ {:
+     RESULT = new Declaracion(v.toString(), val);
+ :}
+ ;
 
-estructuraSI ::= SI condicion ENTONCES programa FINSI;
+ /* VALOR EN VARIABLES */
 
-condicion ::= PARENTESIS_ABRE VARIABLE MENOR VARIABLE PARENTESIS_CIERRA
-            | PARENTESIS_ABRE VARIABLE MAYOR VARIABLE PARENTESIS_CIERRA
-            | PARENTESIS_ABRE VARIABLE MENORIGUAL VARIABLE PARENTESIS_CIERRA
-            | PARENTESIS_ABRE VARIABLE MAYORIGUAL VARIABLE PARENTESIS_CIERRA
-            | PARENTESIS_ABRE VARIABLE IGUALIGUAL VARIABLE PARENTESIS_CIERRA
-            ;
+ valor ::= ENTERO:e  {: RESULT = e.toString(); :}
+         | DECIMAL:d {: RESULT = d.toString(); :}
+ ;
 
-ciclo ::= MIENTRAS condicion HACER programa FINMIENTRAS;
+ /* MOSTRAR */
 
-mostrar ::= MOSTRAR declaracion
-           | MOSTRAR valor
-           | MOSTRAR CADENA
-           ;
+ mostrar ::= MOSTRAR CADENA:c
+ {:
+     RESULT = new Mostrar(c.toString());
+ :}
+ ;
 
-leer ::= LEER VARIABLE
-        ;
+ /* LEER */
+
+ leer ::= LEER VARIABLE:v
+ {:
+     RESULT = new Leer(v.toString());
+ :}
+ ;
+
+ /* CONDICION SI  */
+
+ estructuraSI ::= SI condicion:c ENTONCES
+ {:
+     RESULT = new CondicionSI(c);
+ :}
+ ;
+
+ /* CICLO MIENTRAS */
+
+ ciclo ::= MIENTRAS condicion:c HACER
+ {:
+     RESULT = new CicloMientras(c);
+ :}
+ ;
+
+ /* CONDICIONES PARA CICLOS Y SI */
+
+ condicion ::= PARENTESIS_ABRE VARIABLE:v1 MENOR VARIABLE:v2 PARENTESIS_CIERRA
+ {:
+     RESULT = v1.toString() + " < " + v2.toString();
+ :}
+ | PARENTESIS_ABRE VARIABLE:v1 MAYOR VARIABLE:v2 PARENTESIS_CIERRA
+ {:
+     RESULT = v1.toString() + " > " + v2.toString();
+ :}
+ | PARENTESIS_ABRE VARIABLE:v1 IGUALIGUAL VARIABLE:v2 PARENTESIS_CIERRA
+ {:
+     RESULT = v1.toString() + " == " + v2.toString();
+ :}
+ ;
