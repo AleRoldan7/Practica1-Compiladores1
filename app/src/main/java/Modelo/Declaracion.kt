@@ -1,5 +1,6 @@
 package Modelo
 
+/*
 class Declaracion(private var variable : String, private var valor : String) : Instrucciones() {
 
     fun getVariable(): String {
@@ -18,3 +19,5 @@ class Declaracion(private var variable : String, private var valor : String) : I
         return "VAR $variable = $valor"
     }
 }
+
+ */

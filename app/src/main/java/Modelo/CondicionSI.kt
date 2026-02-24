@@ -1,16 +1,19 @@
 package Modelo
 
-class CondicionSI(private var condicion: String) : Instrucciones() {
+/*
+class CondicionSI(
+    private val condicion: String,
+    private val entonces: Instrucciones?
+) : Instrucciones() {
 
-    fun getCondicion(): String {
-        return condicion
-    }
+    fun getCondicion(): String = condicion
+    fun getEntonces(): Instrucciones? = entonces
 
-    override fun getTipo(): String {
-        return "SI"
-    }
+    override fun getTipo(): String = "SI"
 
     override fun toString(): String {
-        return "SI ($condicion)"
+        return "SI ($condicion) ENTONCES ${entonces?.toString() ?: "sin cuerpo"}"
     }
 }
+
+ */

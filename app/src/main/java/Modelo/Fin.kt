@@ -1,5 +1,6 @@
 package Modelo
 
+/*
 class Fin : Instrucciones() {
 
     override fun getTipo(): String {
@@ -10,3 +11,5 @@ class Fin : Instrucciones() {
         return "FIN"
     }
 }
+
+ */

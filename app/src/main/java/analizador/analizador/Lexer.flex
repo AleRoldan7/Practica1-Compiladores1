@@ -1,6 +1,8 @@
 package analizador.analizador;
 
+import Modelo.TokenError;
 import java_cup.runtime.Symbol;
+import java.util.ArrayList;
 
 %%
 
@@ -12,10 +14,12 @@ import java_cup.runtime.Symbol;
 %column
 
 %{
-    private Symbol symbol(int type) {
-      return new Symbol(type, yyline, yycolumn, yytext());
-    }
 
+            public static ArrayList<TokenError> listaErrores = new ArrayList<>();
+
+            private Symbol symbol(int type) {
+              return new Symbol(type, yyline + 1, yycolumn + 1, yytext());
+            }
 %}
 
 
@@ -82,5 +86,16 @@ ID = {LETTER}({LETTER} | {DIGITO} | "_")*
 {ID}       { return symbol(sym.VARIABLE);}
 
 /*PARA DECIR QUE ES UN ERROR*/
-.                                       { return symbol(sym.ERROR); }
+.                                     {
+                                           listaErrores.add(
+                                               new TokenError(
+                                                   yytext(),
+                                                   yyline + 1,
+                                                   yycolumn + 1,
+                                                   "Léxico",
+                                                   "Símbolo no existe en el lenguaje"
+                                               )
+                                           );
+                                       }
+
 

@@ -1,5 +1,6 @@
 package Modelo
 
+/*
 class Leer(private var variable : String) : Instrucciones() {
 
     fun getVariable() : String {
@@ -14,3 +15,5 @@ class Leer(private var variable : String) : Instrucciones() {
         return "LEER $variable"
     }
 }
+
+ */

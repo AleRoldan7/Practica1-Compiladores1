@@ -46,8 +46,12 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.github.vbmacher:java-cup-runtime:11b")
+    //implementation("com.github.vbmacher:java-cup-runtime:11b")
 
+    // https://mvnrepository.com/artifact/de.jflex/cup_runtime
+    implementation("de.jflex:cup_runtime:11b-20160615")
+    // https://mvnrepository.com/artifact/com.itextpdf/itextpdf
+    implementation("com.itextpdf:itextpdf:5.5.13.3")
 
 
 }

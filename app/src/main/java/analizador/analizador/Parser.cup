@@ -1,6 +1,25 @@
 package analizador.analizador;
 
 import java_cup.runtime.Symbol;
+import java.util.List;
+import java.util.ArrayList;
+import Modelo.*;
+
+parser code {:
+
+        public static ArrayList<TokenError> listaErrores = new ArrayList<>();
+
+        public void errorSyntaxys(Symbol symbol) {
+            listaErrores.add(new TokenError(symbol.value != null ? symbol.value.toString() : "EOF",
+                                                        symbol.left+1,
+                                                        symbol.right+1,
+                                                        "Sintáctico",
+                                                        "Error de sintaxis"));
+        }
+
+:}
+
+
 
 /* ===== TERMINALES ===== */
 
@@ -21,105 +40,58 @@ terminal VARIABLE;
 
 /* ===== NO TERMINALES ===== */
 
-
 non terminal List<Instrucciones> programa;
+non terminal List<Instrucciones> lista;
+non terminal Instrucciones sentencia;
 non terminal Instrucciones declaracion;
 non terminal String valor;
-non terminal Instrucciones sentencia;
-non terminal Instrucciones ciclo;
-non terminal Instrucciones estructuraSI;
-non terminal String condicion;
 non terminal Instrucciones mostrar;
 non terminal Instrucciones leer;
 
 start with programa;
 
-//* GRAMATICA */
+programa ::= INICIO lista:l FIN
+{: RESULT = l; :}
+;
 
+lista ::= lista:l sentencia:s
+{: l.add(s); RESULT = l; :}
+| sentencia:s
+{:
+   List<Instrucciones> nueva = new ArrayList<>();
+   nueva.add(s);
+   RESULT = nueva;
+:}
+;
+sentencia ::= declaracion:d
+{: RESULT = d; :}
+            | mostrar:m
+{: RESULT = m; :}
+            | leer:l
+{: RESULT = l; :}
+            | error: e {:listaErrores.add(
+                                             new TokenError(
+                                                 "Error en sentencia",
+                                                 0,
+                                                 0,
+                                                 "Sintáctico",
+                                                 "Estructura inválida"
+                                             )
+                                         );:}
+;
 
- programa ::= programa:p sentencia:s
- {:
-     p.add(s);
-     RESULT = p;
+declaracion ::= VAR VARIABLE:v IGUAL valor:val
+{: RESULT = new Declaracion(v.toString(), val); :}
+;
 
- :}
- | sentencia:s
- {:
-     List<Instrucciones> lista = new ArrayList<>();
-     lista.add(s);
-     RESULT = lista;
- :}
- ;
+valor ::= ENTERO:e {: RESULT = e.toString(); :}
+        | DECIMAL:d {: RESULT = d.toString(); :}
+;
 
- /* SENTENCIAS */
+mostrar ::= MOSTRAR CADENA:c
+{: RESULT = new Mostrar(c.toString()); :}
+;
 
- sentencia ::= declaracion:d {: RESULT = d; :}
-             | mostrar:m     {: RESULT = m; :}
-             | leer:l        {: RESULT = l; :}
-             | estructuraSI:s {: RESULT = s; :}
-             | ciclo:c       {: RESULT = c; :}
-             | INICIO        {: RESULT = new Inicio(); :}
-             | FIN           {: RESULT = new Fin(); :}
- ;
-
- /* DECLARACION */
-
- declaracion ::= VAR VARIABLE:v IGUAL valor:val
- {:
-     RESULT = new Declaracion(v.toString(), val);
- :}
- ;
-
- /* VALOR EN VARIABLES */
-
- valor ::= ENTERO:e  {: RESULT = e.toString(); :}
-         | DECIMAL:d {: RESULT = d.toString(); :}
- ;
-
- /* MOSTRAR */
-
- mostrar ::= MOSTRAR CADENA:c
- {:
-     RESULT = new Mostrar(c.toString());
- :}
- ;
-
- /* LEER */
-
- leer ::= LEER VARIABLE:v
- {:
-     RESULT = new Leer(v.toString());
- :}
- ;
-
- /* CONDICION SI  */
-
- estructuraSI ::= SI condicion:c ENTONCES
- {:
-     RESULT = new CondicionSI(c);
- :}
- ;
-
- /* CICLO MIENTRAS */
-
- ciclo ::= MIENTRAS condicion:c HACER
- {:
-     RESULT = new CicloMientras(c);
- :}
- ;
-
- /* CONDICIONES PARA CICLOS Y SI */
-
- condicion ::= PARENTESIS_ABRE VARIABLE:v1 MENOR VARIABLE:v2 PARENTESIS_CIERRA
- {:
-     RESULT = v1.toString() + " < " + v2.toString();
- :}
- | PARENTESIS_ABRE VARIABLE:v1 MAYOR VARIABLE:v2 PARENTESIS_CIERRA
- {:
-     RESULT = v1.toString() + " > " + v2.toString();
- :}
- | PARENTESIS_ABRE VARIABLE:v1 IGUALIGUAL VARIABLE:v2 PARENTESIS_CIERRA
- {:
-     RESULT = v1.toString() + " == " + v2.toString();
- :}
- ;
+leer ::= LEER VARIABLE:v
+{: RESULT = new Leer(v.toString()); :}
+;

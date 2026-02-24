@@ -1,6 +1,7 @@
 package com.example.practica1_compi1
 
 import Modelo.Instrucciones
+import Modelo.TokenError
 import analizador.analizador.Lexer
 import analizador.analizador.Parser
 import android.os.Bundle
@@ -39,27 +40,54 @@ class FirstFragment : Fragment() {
 
         binding.btnAnalizar.setOnClickListener {
 
-            val entrada = binding.etEntrada.text.toString()
+            val entrada = binding.etEntrada.text.toString().trim()
+
+            if (entrada.isEmpty()) {
+                binding.tvResultado.text = "Escribe algo primero"
+                return@setOnClickListener
+            }
 
             try {
                 val lexer = Lexer(StringReader(entrada))
                 val parser = Parser(lexer)
 
-                val resultado = parser.debug_parse().value as List<Instrucciones>
+                val parseResult = parser.parse()
+                val errores = ArrayList<TokenError>()
+                errores.addAll(Lexer.listaErrores)
+                errores.addAll(Parser.listaErrores)
+                Log.d("ERRORES", "Errores encontrados: ${errores.size}")
+                errores.forEach {
+                    Log.d("ERRORES", "${it.tipo} → ${it.lexema} (${it.linea}, ${it.columna})")
+                }
+                val resultado = parseResult.value
 
-                val bundle = Bundle()
-                bundle.putSerializable("Lista instrucciones", ArrayList(resultado))
+                Log.d("PARSER_RESULT", "Tipo devuelto: ${resultado?.javaClass?.name ?: "null"}")
+                Log.d("PARSER_RESULT", "Valor crudo: $resultado")
 
-                findNavController().navigate(
-                    R.id.diagramaFragment,
-                    bundle
-                )
+                if (resultado is List<*>) {
+                    val listaCruda = resultado as List<Instrucciones?>
+                    val listaLimpia = listaCruda.filterNotNull()
 
-                Log.d("PARSER_OK", "Si jalo ")
+                    Log.d("PARSER_RESULT", "Es lista! Tamaño = ${listaLimpia.size}")
+                    listaLimpia.forEachIndexed { i, instr ->
+                        Log.d("PARSER_RESULT", "  [$i] ${instr.javaClass.simpleName} → $instr")
+                    }
+
+                    if (listaLimpia.isEmpty()) {
+                        binding.tvResultado.text = "Parser OK pero lista vacía (solo nulls o vacío). Revisa el input o gramática."
+                    } else {
+                        val bundle = Bundle().apply {
+                            putSerializable("Lista instrucciones", ArrayList(listaLimpia))
+                        }
+                        findNavController().navigate(R.id.diagramaFragment, bundle)
+                    }
+                } else {
+                    binding.tvResultado.text = "El parser no devolvió una lista. Tipo: ${resultado?.javaClass?.name}"
+                }
+
             } catch (e: Exception) {
-                binding.tvResultado.text = e.message
-                e.printStackTrace()
-                Log.d("PARSER_ERROR", "Error ")
+                Log.e("PARSER_ERROR", "Error al parsear", e)
+                binding.tvResultado.text = "Error: ${e.message}"
             }
         }
     }

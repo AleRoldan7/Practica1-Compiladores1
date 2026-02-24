@@ -2,6 +2,7 @@ package Modelo
 
 import android.R
 
+/*
 class Mostrar(private var texto : String) : Instrucciones() {
 
     fun getTexto(): String {
@@ -15,3 +16,5 @@ class Mostrar(private var texto : String) : Instrucciones() {
         return "MOSTRAR \"$texto\""
     }
 }
+
+ */

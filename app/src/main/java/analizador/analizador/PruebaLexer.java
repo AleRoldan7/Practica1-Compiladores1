@@ -7,8 +7,13 @@ public class PruebaLexer {
 
     public static void main(String[] args) throws Exception {
 
-        String entrada = "VAR a = 5";
+        String entrada = "VARa";
 
+        StringReader lexer = new StringReader(entrada);
+
+        Lexer lexico = new Lexer(lexer);
+
+        System.out.println(lexico);
 
 
     }
