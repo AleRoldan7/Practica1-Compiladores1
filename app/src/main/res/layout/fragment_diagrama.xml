@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:background="#F5F5F5"
+              tools:context=".DiagramaFragment">
+
+    <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#4169E1"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="4dp">
+
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DIAGRAMA DE FLUJO"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:padding="16dp"
+                android:fontFamily="sans-serif-medium" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.example.practica1_compi1.DiagramaView
+            android:id="@+id/diagramaView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#FFFFFF" />
+
+    <LinearLayout
+            android:id="@+id/layoutReportes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="#FFFFFF"
+            android:elevation="4dp">
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReporteOperadores"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Operadores"
+                android:textSize="14sp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#4CAF50"
+                android:layout_marginHorizontal="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReporteEstructuras"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Estructuras"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                app:backgroundTint="#FFC107"
+                android:layout_marginHorizontal="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReporteErrores"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Errores"
+                android:textSize="14sp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#F44336"
+                android:layout_marginHorizontal="4dp"/>
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/nav_graph"
+            app:startDestination="@id/firstFragment">
+
+    <fragment
+            android:id="@+id/firstFragment"
+            android:name="com.example.practica1_compi1.FirstFragment"
+            android:label="Entrada de Código">
+
+        <action
+                android:id="@+id/action_firstFragment_to_diagramaFragment"
+                app:destination="@id/diagramaFragment" />
+
+        <action
+                android:id="@+id/action_firstFragment_to_reporteError"
+                app:destination="@id/reporteError" />
+    </fragment>
+
+    <fragment
+            android:id="@+id/diagramaFragment"
+            android:name="com.example.practica1_compi1.DiagramaFragment"
+            android:label="Diagrama de Flujo">
+
+        <action
+                android:id="@+id/action_diagrama_to_reporteOperador"
+                app:destination="@id/reporteOperador" />
+
+        <action
+                android:id="@+id/action_diagrama_to_reporteEstructuras"
+                app:destination="@id/reporteEstructuras" />
+
+        <action
+                android:id="@+id/action_diagrama_to_reporteError"
+                app:destination="@id/reporteError" />
+    </fragment>
+
+    <fragment
+            android:id="@+id/reporteError"
+            android:name="com.example.practica1_compi1.ReporteError"
+            android:label="Reporte de Errores" />
+
+    <!-- Reporte de operadores matemáticos -->
+    <fragment
+            android:id="@+id/reporteOperador"
+            android:name="com.example.practica1_compi1.ReporteOperadorFragment"
+            android:label="Operadores Matemáticos" />
+
+    <fragment
+            android:id="@+id/reporteEstructuras"
+            android:name="com.example.practica1_compi1.ReporteEstructurasFragment"
+            android:label="Estructuras de Control" />
+
+</navigation>

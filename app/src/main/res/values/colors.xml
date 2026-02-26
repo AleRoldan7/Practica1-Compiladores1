@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="md_theme_primary">#006874</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#9CF0FF</color>
+    <color name="md_theme_onPrimaryContainer">#001F24</color>
+
+    <color name="md_theme_secondary">#4A6364</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+
+    <color name="md_theme_surface">#F6FBFF</color>
+    <color name="md_theme_onSurface">#1A1C1E</color>
+    <color name="md_theme_surfaceVariant">#DDE4E5</color>
+    <color name="md_theme_onSurfaceVariant">#41484A</color>
+
+    <color name="md_theme_outline">#71787A</color>
+
+    <color name="result_background">#F8FAFF</color>
+    <color name="result_border">#B3DAE8</color>
+
+    <color name="report_header">#E0F2F1</color>
+    <color name="report_error">#FFEBEE</color>
+    <color name="report_success">#E8F5E9</color>
+    <color name="md_theme_error">#B3261E</color>
+
+    <color name="celeste_claro">#40E0D0</color>
+    <color name="celeste_borde">#00CED1</color>
+    <color name="azul_boton">#4169E1</color>
+    <color name="verde_boton">#4CAF50</color>
+    <color name="amarillo_boton">#FFC107</color>
+    <color name="rojo_boton">#F44336</color>
+    <color name="resultado_fondo">#2F4F4F</color>
+    <color name="resultado_borde">#4682B4</color>
+
+</resources>
