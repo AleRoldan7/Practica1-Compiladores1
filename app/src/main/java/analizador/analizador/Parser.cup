@@ -4,94 +4,350 @@ import java_cup.runtime.Symbol;
 import java.util.List;
 import java.util.ArrayList;
 import Modelo.*;
+import configuracion.*;
+import estilos.*;
+import reportes.*;
 
 parser code {:
+    public static ArrayList<TokenError> listaErrores = new ArrayList<>();
+    public static List<ReporteOperador> listaOperador = new ArrayList<>();
+    public static List<ReporteEstructurasControl> listaEstructuras = new ArrayList<>();
+    public static int indiceContador = 1;
 
-        public static ArrayList<TokenError> listaErrores = new ArrayList<>();
-
-        public void errorSyntaxys(Symbol symbol) {
-            listaErrores.add(new TokenError(symbol.value != null ? symbol.value.toString() : "EOF",
-                                                        symbol.left+1,
-                                                        symbol.right+1,
-                                                        "Sintáctico",
-                                                        "Error de sintaxis"));
-        }
-
+    @Override
+    public void syntax_error(Symbol symbol) {
+        listaErrores.add(new TokenError(
+            symbol.value != null ? symbol.value.toString() : "EOF",
+            symbol.left + 1,
+            symbol.right + 1,
+            "Sintáctico",
+            "Error de sintaxis"
+        ));
+    }
 :}
 
-
-
-/* ===== TERMINALES ===== */
-
+/* ====================== TERMINALES ====================== */
 terminal INICIO, FIN, SI, ENTONCES, MIENTRAS, FINSI, FINMIENTRAS;
 terminal HACER, MOSTRAR, LEER, VAR;
 
 terminal SUMA, RESTA, MULTI, DIVISION;
 terminal IGUAL, IGUALIGUAL, DIFERENTE;
 terminal MAYOR, MENOR, MAYORIGUAL, MENORIGUAL;
-terminal AND, OR;
+terminal AND, OR, NOT;
 
 terminal PARENTESIS_ABRE, PARENTESIS_CIERRA;
 
 terminal ENTERO, DECIMAL;
 terminal CADENA, COMENTARIO, ERROR;
-
 terminal VARIABLE;
 
-/* ===== NO TERMINALES ===== */
+/* TERMINALES PARA CONFIGURACIÓN */
+terminal DEFAULT;
+terminal COLOR_TEXTO_SI, COLOR_SI;
+terminal FIGURA_SI, LETRA_SI, LETRA_SIZE_SI;
 
-non terminal List<Instrucciones> programa;
+terminal COLOR_TEXTO_MIENTRAS, COLOR_MIENTRAS;
+terminal FIGURA_MIENTRAS, LETRA_MIENTRAS, LETRA_SIZE_MIENTRAS;
+
+terminal COLOR_TEXTO_BLOQUE, COLOR_BLOQUE;
+terminal FIGURA_BLOQUE, LETRA_BLOQUE, LETRA_SIZE_BLOQUE;
+
+terminal PIPE, COMA, PA, PC;
+terminal HEXCOLOR;
+terminal FIGURA;
+terminal FUENTE;
+terminal SEPARADORSECCION;
+terminal IGUALCONF;     /* ← se usa solo en configuración */
+terminal PORCENTAJE;
+
+/* ====================== NO TERMINALES ====================== */
+non terminal ResultadoAnalisis programa;
 non terminal List<Instrucciones> lista;
 non terminal Instrucciones sentencia;
 non terminal Instrucciones declaracion;
 non terminal String valor;
 non terminal Instrucciones mostrar;
 non terminal Instrucciones leer;
+non terminal Instrucciones si;
+non terminal Instrucciones mientras;
+non terminal Instrucciones asignacion;
+
+non terminal List<ConfiguracionesUniversales> configuracion_opcional;
+non terminal List<ConfiguracionesUniversales> lista_configuracion;
+non terminal ConfiguracionesUniversales config;
+
+non terminal String expresion;
+non terminal String termino;
+non terminal String factor;
+
+/* No terminales para configuración */
+non terminal Integer indice;
+non terminal Float tam_letra;
+non terminal Double num_expr;
+non terminal Double termino_num;
+non terminal Double factor_num;
+non terminal String color_val;
+non terminal String figura_val;
+non terminal String letra_val;
+
+
+non terminal String condicion;
+non terminal String cond_or;
+non terminal String cond_and;
+non terminal String cond_not;
+non terminal String cond_rel;
+non terminal String valor_cond;
 
 start with programa;
 
-programa ::= INICIO lista:l FIN
-{: RESULT = l; :}
-;
+/*   GRAMATICA */
 
-lista ::= lista:l sentencia:s
-{: l.add(s); RESULT = l; :}
-| sentencia:s
+programa ::= INICIO lista:l FIN configuracion_opcional:c
 {:
-   List<Instrucciones> nueva = new ArrayList<>();
-   nueva.add(s);
-   RESULT = nueva;
+    if (c != null) {
+        for (ConfiguracionesUniversales conf : c) {
+            conf.aplicarConfiguracion(l);
+        }
+    }
+    RESULT = new ResultadoAnalisis(l,c);
 :}
 ;
-sentencia ::= declaracion:d
-{: RESULT = d; :}
-            | mostrar:m
-{: RESULT = m; :}
-            | leer:l
-{: RESULT = l; :}
-            | error: e {:listaErrores.add(
-                                             new TokenError(
-                                                 "Error en sentencia",
-                                                 0,
-                                                 0,
-                                                 "Sintáctico",
-                                                 "Estructura inválida"
-                                             )
-                                         );:}
+
+lista ::= lista:l sentencia:s {: l.add(s); RESULT = l; :}
+        | sentencia:s
+          {:
+              List<Instrucciones> nueva = new ArrayList<>();
+              nueva.add(s);
+              RESULT = nueva;
+          :}
 ;
+
+ sentencia ::= declaracion:d {: RESULT = d; :}
+             | mostrar:m     {: RESULT = m; :}
+             | leer:l        {: RESULT = l; :}
+             | si:s          {: RESULT = s; :}
+             | mientras:c       {: RESULT = c; :}
+             | asignacion:e      {: RESULT = e; :}
+             | error
+             {:
+                   System.out.println("Error recuperado en sentencia");
+                   RESULT = null;
+             :}
+             ;
 
 declaracion ::= VAR VARIABLE:v IGUAL valor:val
-{: RESULT = new Declaracion(v.toString(), val); :}
-;
+{: RESULT = new Declaracion(v.toString(), val, indiceContador++); :};
 
 valor ::= ENTERO:e {: RESULT = e.toString(); :}
-        | DECIMAL:d {: RESULT = d.toString(); :}
-;
+        | DECIMAL:d {: RESULT = d.toString(); :};
 
 mostrar ::= MOSTRAR CADENA:c
-{: RESULT = new Mostrar(c.toString()); :}
-;
+{: RESULT = new Mostrar(c.toString(), indiceContador++); :};
 
 leer ::= LEER VARIABLE:v
-{: RESULT = new Leer(v.toString()); :}
+{: RESULT = new Leer(v.toString(), indiceContador++); :};
+
+si ::= SI condicion:c ENTONCES lista:l FINSI
+{:
+    listaEstructuras.add(new ReporteEstructurasControl(
+        "SI",
+        1,
+        c
+    ));
+    RESULT = new Si(c, l, indiceContador++);
+:}
 ;
+
+mientras ::= MIENTRAS condicion:c HACER lista:l FINMIENTRAS
+{:
+    listaEstructuras.add(new ReporteEstructurasControl(
+        "MIENTRAS",
+         1,
+        c
+    ));
+    RESULT = new Mientras(c, l, indiceContador++);
+:}
+;
+
+condicion ::= cond_or:c {: RESULT = c; :}
+;
+
+
+cond_or ::= cond_or:c1 OR cond_and:c2
+            {: RESULT = c1 + " || " + c2; :}
+
+          | cond_and:c
+            {: RESULT = c; :}
+;
+
+
+cond_and ::= cond_and:c1 AND cond_not:c2
+             {: RESULT = c1 + " && " + c2; :}
+
+           | cond_not:c
+             {: RESULT = c; :}
+;
+
+
+cond_not ::= NOT cond_not:c
+             {: RESULT = "!" + c; :}
+
+           | PARENTESIS_ABRE cond_or:c PARENTESIS_CIERRA
+             {: RESULT = "(" + c + ")"; :}
+
+           | cond_rel:c
+             {: RESULT = c; :}
+;
+
+
+cond_rel ::= valor_cond:v1 MENOR valor_cond:v2
+             {:
+                 RESULT = v1 + " < " + v2;
+             :}
+
+           | valor_cond:v1 MAYOR valor_cond:v2
+             {: RESULT = v1 + " > " + v2; :}
+
+           | valor_cond:v1 IGUALIGUAL valor_cond:v2
+             {: RESULT = v1 + " == " + v2; :}
+
+           | valor_cond:v1 DIFERENTE valor_cond:v2
+             {: RESULT = v1 + " != " + v2; :}
+
+           | valor_cond:v1 MAYORIGUAL valor_cond:v2
+             {: RESULT = v1 + " >= " + v2; :}
+
+           | valor_cond:v1 MENORIGUAL valor_cond:v2
+             {: RESULT = v1 + " <= " + v2; :}
+;
+
+
+valor_cond ::= VARIABLE:v {: RESULT = v.toString(); :}
+             | ENTERO:e   {: RESULT = e.toString(); :}
+             | DECIMAL:d  {: RESULT = d.toString(); :}
+;
+
+asignacion ::= VARIABLE:v IGUAL expresion:o
+{: RESULT = new Asignacion(v.toString(), o, indiceContador++); :};
+
+expresion ::= expresion:e1 SUMA termino:t
+            {:
+                listaOperador.add(new ReporteOperador(
+                    "Suma",
+                    e1left + 1,
+                    tleft,
+                    e1 + " + " + t
+                ));
+                RESULT = e1 + " + " + t;
+            :}
+          | expresion:e1 RESTA termino:t
+            {:
+                listaOperador.add(new ReporteOperador(
+                    "Resta",
+                    e1left + 1,
+                    tleft,
+                    e1 + " - " + t
+                ));
+                RESULT = e1 + " - " + t;
+            :}
+          | termino:t {: RESULT = t; :}
+          ;
+
+termino ::= termino:t1 MULTI factor:f
+            {:
+                listaOperador.add(new ReporteOperador(
+                    "Multiplicación",
+                    t1left + 1,
+                    fleft,
+                    t1 + " * " + f
+                ));
+                RESULT = t1 + " * " + f;
+            :}
+          | termino:t1 DIVISION factor:f
+            {:
+                listaOperador.add(new ReporteOperador(
+                    "División",
+                    t1left + 1,
+                    fleft,
+                    t1 + " / " + f
+                ));
+                RESULT = t1 + " / " + f;
+            :}
+          | factor:f {: RESULT = f; :}
+          ;
+
+factor ::= PARENTESIS_ABRE expresion:e PARENTESIS_CIERRA {: RESULT = "(" + e + ")"; :}
+         | ENTERO:e   {: RESULT = e.toString(); :}
+         | DECIMAL:d  {: RESULT = d.toString(); :}
+         | VARIABLE:v {: RESULT = v.toString(); :};
+
+configuracion_opcional ::= SEPARADORSECCION lista_configuracion:l {: RESULT = l; :}
+                         | {: RESULT = null; :};
+
+lista_configuracion ::= lista_configuracion:l config:c
+                        {: l.add(c); RESULT = l; :}
+
+                      | lista_configuracion:l error
+                        {:
+                            System.out.println("Error en configuración, recuperando...");
+                            RESULT = l;
+                        :}
+
+                      | config:c
+                        {:
+                            List<ConfiguracionesUniversales> nueva = new ArrayList<>();
+                            nueva.add(c);
+                            RESULT = nueva;
+                        :};
+
+indice ::= ENTERO:i {: RESULT = Integer.parseInt(i.toString()); :};
+
+tam_letra ::= num_expr:n {: RESULT = n.floatValue(); :};
+
+figura_val ::= FIGURA:f {: RESULT = f.toString().toUpperCase(); :};
+letra_val  ::= FUENTE:f {: RESULT = f.toString().toUpperCase(); :};
+
+num_expr ::= num_expr:e1 SUMA termino_num:t {: RESULT = e1 + t; :}
+           | num_expr:e1 RESTA termino_num:t {: RESULT = e1 - t; :}
+           | termino_num:t {: RESULT = t; :};
+
+termino_num ::= termino_num:t1 MULTI factor_num:f {: RESULT = t1 * f; :}
+              | termino_num:t1 DIVISION factor_num:f {: RESULT = t1 / f; :}
+              | factor_num:f {: RESULT = f; :};
+
+factor_num ::= PARENTESIS_ABRE num_expr:e PARENTESIS_CIERRA {: RESULT = e; :}
+             | ENTERO:e   {: RESULT = Double.parseDouble(e.toString()); :}
+             | DECIMAL:d  {: RESULT = Double.parseDouble(d.toString()); :};
+
+color_val ::= HEXCOLOR:h {: RESULT = h.toString(); :}
+            | num_expr:r COMA num_expr:g COMA num_expr:b {:
+                int rr = (int) Math.round(r);
+                int gg = (int) Math.round(g);
+                int bb = (int) Math.round(b);
+                RESULT = rr + "," + gg + "," + bb;
+              :};
+
+config ::= DEFAULT IGUAL indice:i
+           {: RESULT = new Default(i); :}
+
+         | COLOR_TEXTO_SI IGUAL color_val:c PIPE indice:i
+           {: RESULT = new ColorTextoSi(ConfiguracionColor.Companion.parse(c), i); :}
+
+         | COLOR_SI IGUAL color_val:c PIPE indice:i
+           {: RESULT = new ConfiguracionColorSi(ConfiguracionColor.Companion.parse(c), i); :}
+
+         | LETRA_SI IGUAL letra_val:l PIPE indice:i
+           {: RESULT = new ConfiguracionLetraSi(LetraFuente.valueOf(l), i); :}
+
+         | LETRA_SIZE_SI IGUAL tam_letra:s PIPE indice:i
+           {: RESULT = new ConfiguracionTamaLetraSi(s, i); :}
+
+         /* MIENTRAS */
+         |  COLOR_TEXTO_MIENTRAS IGUAL color_val:c PIPE indice:i
+           {: RESULT = new ConfiguracionLetraMientras(LetraFuente.valueOf(c), i); :}
+         |  COLOR_MIENTRAS IGUAL color_val:c PIPE indice:i
+           {: RESULT = new ConfiguracionColorMientras(ConfiguracionColor.Companion.parse(c), i); :}
+         |  FIGURA_MIENTRAS IGUAL figura_val:f PIPE indice:i
+           {: RESULT = new ConfiguracionFiguraMientras(TipoFigura.valueOf(f), i); :}
+
+         ;

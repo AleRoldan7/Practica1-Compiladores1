@@ -1,5 +1,11 @@
 package Modelo
 
+class Leer(val variable : String, override val indice: Int) : Instrucciones(indice) {
+
+    override fun toString() = "$variable"
+}
+
+
 /*
 class Leer(private var variable : String) : Instrucciones() {
 

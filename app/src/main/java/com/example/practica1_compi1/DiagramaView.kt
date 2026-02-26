@@ -1,22 +1,16 @@
 package com.example.practica1_compi1
 
-//import Modelo.CicloMientras
-//import Modelo.CondicionSI
-import Modelo.Declaracion
-//import Modelo.Fin
-//import Modelo.Inicio
 import Modelo.Instrucciones
 import Modelo.Leer
-import Modelo.Mostrar
+import Modelo.Mientras
+import Modelo.Si
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import configuracion.TipoFigura
+import kotlin.math.max
 
 class DiagramaView @JvmOverloads constructor(
     context: Context,
@@ -27,12 +21,13 @@ class DiagramaView @JvmOverloads constructor(
     var instrucciones: List<Instrucciones> = emptyList()
         set(value) {
             field = value
-            Log.d(TAG, "Nueva lista asignada = tamaño = ${value.size}")
+            Log.d(TAG, "Nueva lista asignada, tamaño = ${value.size}")
             invalidate()
         }
 
-    private val TAG = "DiagramaView_DEBUG"
+    private val TAG = "DiagramaView"
 
+    // Paints
     private val paintBorde = Paint().apply {
         color = Color.BLACK
         style = Paint.Style.STROKE
@@ -49,118 +44,234 @@ class DiagramaView @JvmOverloads constructor(
 
     private val paintFlecha = Paint().apply {
         color = Color.BLACK
-        strokeWidth = 5f
+        strokeWidth = 4f
         style = Paint.Style.STROKE
+        isAntiAlias = true
     }
 
-    private val paintFondoDebug = Paint().apply {
-        color = Color.parseColor("#FFF8E1")
+    private val paintFondo = Paint().apply {
+        color = Color.parseColor("#F5F5F5")
         style = Paint.Style.FILL
+    }
+
+    private val paintTextoCondicion = Paint().apply {
+        color = Color.BLUE
+        textSize = 28f
+        isAntiAlias = true
+        textAlign = Paint.Align.CENTER
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        if (width <= 0 || height <= 0) return
 
-        Log.d(TAG, "onDraw() llamado | width = $width  height = $height | instrucciones.size = ${instrucciones.size}")
-
-        if (width <= 0 || height <= 0) {
-            Log.w(TAG, "Vista sin dimensiones válidas aún → esperando layout")
-            return
-        }
-
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paintFondoDebug)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paintFondo)
 
         val centroX = width / 2f
-        val margenIzq = 100f
-        var y = 60f  // empezamos un poco más arriba
+        var y = 80f
 
-        Log.d(TAG, "Dibujando INICIO forzado")
-        val altoInicio = dibujarOvalo(canvas, "INICIO", centroX, y)
-        y += altoInicio + 60f
-        dibujarFlechaVertical(canvas, centroX, y - 60f, centroX, y)
+        dibujarOvalo(canvas, "INICIO", centroX, y)
+        y += 180f
 
         if (instrucciones.isEmpty()) {
-            Log.w(TAG, "Lista de instrucciones está VACÍA → solo se verá INICIO")
-            canvas.drawText("Lista vacía", centroX, y + 100f, paintTexto)
+            canvas.drawText("No hay instrucciones", centroX, y + 100f, paintTexto)
         } else {
-            Log.d(TAG, "Procesando ${instrucciones.size} instrucciones...")
-            y = dibujarSecuencia(canvas, instrucciones, margenIzq, y, centroX)
+            val resultado = dibujarSecuencia(canvas, instrucciones, y, centroX)
+            y = resultado.y
         }
 
-        Log.d(TAG, "Dibujando FIN forzado")
         dibujarOvalo(canvas, "FIN", centroX, y)
-        // flecha hacia FIN
-        dibujarFlechaVertical(canvas, centroX, y - 60f, centroX, y)
     }
+
+    private data class ResultadoDibujo(val y: Float, val xFin: Float = 0f)
 
     private fun dibujarSecuencia(
         canvas: Canvas,
         lista: List<Instrucciones>,
-        x: Float,
         yInicial: Float,
         centroX: Float
-    ): Float {
+    ): ResultadoDibujo {
 
-        var y = yInicial
+        var yActual = yInicial
+        val resultadoFinal = ResultadoDibujo(yActual)
 
-        lista.forEachIndexed { index, inst ->
-            val nombre = inst.javaClass.simpleName
-            Log.d(TAG, "[$index] Procesando: $nombre → ${inst.toString()}")
+        lista.forEach { inst ->
+            when (inst) {
+                is Si -> {
+                    val altura = when (inst.figura) {
+                        TipoFigura.ROMBO -> dibujarRombo(canvas, inst, inst.getTextoCondicion(), centroX, yActual)
+                        else -> dibujarFiguraGenerica(canvas, inst, inst.getTextoCondicion(), yActual, centroX)
+                    }
 
-            val altura = when (inst) {
-                is Declaracion -> {
-                    dibujarRectangulo(canvas, inst.toString(), x, y, centroX)
+                    val yCentro = yActual + altura / 2
+
+                    val xVerdadero = centroX + 340f
+                    dibujarFlecha(canvas, centroX + 60f, yCentro, xVerdadero - 50f, yCentro)
+                    dibujarTextoFlecha(canvas, "Sí", (centroX + xVerdadero)/2, yCentro - 25f, Color.GREEN)
+
+                    val resVerdadero = dibujarBloque(canvas, inst.cuerpoCondicion, xVerdadero, yCentro - 40f)
+
+                    val yFalso = yActual + altura + 140f
+                    dibujarFlecha(canvas, centroX, yCentro + altura/2 + 20f, centroX, yFalso - 30f)
+                    dibujarTextoFlecha(canvas, "No", centroX + 30f, (yCentro + yFalso)/2, Color.RED)
+
+                    // Conectar rama verdadera de vuelta al flujo principal (antes del siguiente elemento)
+                    if (resVerdadero.xFin > 0) {
+                        paintFlecha.color = Color.GRAY
+                        paintFlecha.strokeWidth = 3f
+                        canvas.drawLine(
+                            resVerdadero.xFin, resVerdadero.y,
+                            centroX, resVerdadero.y + 60f,
+                            paintFlecha
+                        )
+                    }
+
+                    yActual = max(resVerdadero.y, yFalso) + 60f
                 }
-                is Mostrar -> {
-                    dibujarRectangulo(canvas, "MOSTRAR ${inst.toString()}", x, y, centroX)
-                }
-                is Leer -> {
-                    dibujarParalelogramo(canvas, "LEER ${inst.toString()}", x, y, centroX)
+
+                is Mientras -> {
+                    val yInicio = yActual
+
+                    val altura = when (inst.figura) {
+                        TipoFigura.ROMBO -> dibujarRombo(canvas, inst, inst.getTextoCondicion(), centroX, yActual)
+                        else -> dibujarFiguraGenerica(canvas, inst, inst.getTextoCondicion(), yActual, centroX)
+                    }
+
+                    val yCentro = yActual + altura / 2
+
+                    val xCuerpo = centroX + 340f
+                    dibujarFlecha(canvas, centroX + 60f, yCentro, xCuerpo - 50f, yCentro)
+                    dibujarTextoFlecha(canvas, "Sí", (centroX + xCuerpo)/2, yCentro - 25f, Color.GREEN)
+
+                    val resCuerpo = dibujarBloque(canvas, inst.cuerpo, xCuerpo, yCentro - 40f)
+
+                    paintFlecha.color = Color.parseColor("#FF5722")
+                    paintFlecha.strokeWidth = 4.5f
+
+                    val pathRetorno = Path().apply {
+                        moveTo(resCuerpo.xFin, resCuerpo.y)
+                        lineTo(resCuerpo.xFin + 140f, resCuerpo.y)
+                        lineTo(resCuerpo.xFin + 140f, yInicio + 40f)
+                        lineTo(centroX - 120f, yInicio + 40f)
+                        lineTo(centroX - 80f, yInicio + 20f)
+                    }
+                    canvas.drawPath(pathRetorno, paintFlecha)
+
+                    canvas.drawLine(centroX - 80f, yInicio + 20f, centroX - 120f, yInicio + 40f, paintFlecha)
+                    canvas.drawLine(centroX - 80f, yInicio + 20f, centroX - 120f, yInicio, paintFlecha)
+
+                    val ySalida = yActual + altura + 160f
+                    dibujarFlecha(canvas, centroX, yCentro + altura/2 + 30f, centroX, ySalida - 30f)
+                    dibujarTextoFlecha(canvas, "No", centroX + 30f, (yCentro + ySalida)/2, Color.RED)
+
+                    yActual = ySalida + 80f
                 }
 
                 else -> {
-                    Log.w(TAG, "Tipo NO manejado: $nombre")
-                    dibujarRectangulo(canvas, "??? $nombre ???", x, y, centroX)
+                    val figura = if (inst is Leer) TipoFigura.PARALELOGRAMO else inst.figura
+                    val altura = when (figura) {
+                        TipoFigura.PARALELOGRAMO -> dibujarParalelogramo(canvas, inst, inst.toString(), yActual, centroX)
+                        else -> dibujarFiguraGenerica(canvas, inst, inst.toString(), yActual, centroX)
+                    }
+                    yActual += altura + 70f
                 }
             }
-
-            // Flecha descendente
-            dibujarFlechaVertical(canvas, centroX, y + altura, centroX, y + altura + 50f)
-
-            y += altura + 90f
         }
 
-        return y
+        return ResultadoDibujo(yActual)
     }
 
-    // ────────────────────────────────────────
-    //  FIGURAS
-    // ────────────────────────────────────────
+    private fun dibujarBloque(
+        canvas: Canvas,
+        lista: List<Instrucciones>,
+        x: Float,
+        yInicial: Float
+    ): ResultadoDibujo {
+        var y = yInicial
+        var xFin = x
+
+        lista.forEach { inst ->
+            val figuraFinal = if (inst is Leer) TipoFigura.PARALELOGRAMO else inst.figura
+            val altura = when (figuraFinal) {
+                TipoFigura.PARALELOGRAMO -> dibujarParalelogramo(canvas, inst, inst.toString(), y, x)
+                else -> dibujarFiguraGenerica(canvas, inst, inst.toString(), y, x)
+            }
+            y += altura + 50f
+        }
+
+        return ResultadoDibujo(y = y, xFin = xFin)
+    }
+
+
+    private fun dibujarFiguraGenerica(
+        canvas: Canvas, inst: Instrucciones, texto: String, y: Float, centroX: Float
+    ): Float {
+        return when (inst.figura) {
+            TipoFigura.RECTANGULO -> dibujarRectangulo(canvas, inst, texto, y, centroX)
+            TipoFigura.ROMBO -> dibujarRombo(canvas, inst, texto, centroX, y)
+            TipoFigura.PARALELOGRAMO -> dibujarParalelogramo(canvas, inst, texto, y, centroX)
+            TipoFigura.CIRCULO -> dibujarCirculo(canvas, inst, texto, centroX, y)
+            TipoFigura.RECTANGULO_REDONDEADO -> dibujarRectanguloRedondeado(canvas, inst, texto, y, centroX)
+            else -> dibujarRectangulo(canvas, inst, texto, y, centroX)
+        }
+    }
+
 
     private fun dibujarOvalo(canvas: Canvas, texto: String, cx: Float, cy: Float): Float {
-        val ancho = 420f
-        val alto = 140f
+        val ancho = 380f
+        val alto = 120f
         val rect = RectF(cx - ancho/2, cy, cx + ancho/2, cy + alto)
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = Color.parseColor("#E3F2FD")
         canvas.drawOval(rect, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawOval(rect, paintBorde)
+
+        paintTexto.color = Color.BLACK
         canvas.drawText(texto, cx, cy + alto * 0.62f, paintTexto)
-        Log.d(TAG, "Ovalo dibujado: $texto @ y=$cy")
+
         return alto
     }
 
-    private fun dibujarRectangulo(canvas: Canvas, texto: String, x: Float, y: Float, centroX: Float): Float {
-        val ancho = 400f
-        val alto = 110f
+    private fun dibujarRectangulo(
+        canvas: Canvas,
+        inst: Instrucciones,
+        texto: String,
+        y: Float,
+        centroX: Float
+    ): Float {
+        val ancho = 360f
+        val alto = 100f
         val left = centroX - ancho / 2
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = inst.colorFondo ?: Color.WHITE
         canvas.drawRect(left, y, left + ancho, y + alto, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawRect(left, y, left + ancho, y + alto, paintBorde)
+
+        paintTexto.color = inst.colorTexto ?: Color.BLACK
+        paintTexto.textSize = inst.tamLetra
         canvas.drawText(texto, centroX, y + alto * 0.62f, paintTexto)
-        Log.d(TAG, "Rectángulo: $texto @ y=$y")
+
         return alto
     }
 
-    private fun dibujarParalelogramo(canvas: Canvas, texto: String, x: Float, y: Float, centroX: Float): Float {
-        val ancho = 420f
-        val alto = 130f
-        val slant = 70f
+    private fun dibujarParalelogramo(
+        canvas: Canvas,
+        inst: Instrucciones,
+        texto: String,
+        y: Float,
+        centroX: Float
+    ): Float {
+        val ancho = 380f
+        val alto = 120f
+        val slant = 60f
         val left = centroX - ancho / 2
 
         val path = Path().apply {
@@ -170,44 +281,184 @@ class DiagramaView @JvmOverloads constructor(
             lineTo(left, y + alto)
             close()
         }
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = inst.colorFondo ?: Color.WHITE
         canvas.drawPath(path, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawPath(path, paintBorde)
+
+        paintTexto.color = inst.colorTexto ?: Color.BLACK
+        paintTexto.textSize = inst.tamLetra
         canvas.drawText(texto, centroX, y + alto * 0.62f, paintTexto)
-        Log.d(TAG, "Paralelogramo: $texto @ y=$y")
+
         return alto
     }
 
     private fun dibujarRombo(
         canvas: Canvas,
+        inst: Instrucciones,
         texto: String,
         cx: Float,
-        cy: Float,
-        alto: Float = 160f
+        cy: Float
     ): Float {
-        val ancho = 380f
+        val ancho = 400f
+        val alto = 160f
         val mitadAncho = ancho / 2f
         val mitadAlto = alto / 2f
 
         val path = Path().apply {
-            moveTo(cx, cy)                           // arriba
+            moveTo(cx, cy)
             lineTo(cx + mitadAncho, cy + mitadAlto)
-            lineTo(cx, cy + alto)                    // abajo
+            lineTo(cx, cy + alto)
             lineTo(cx - mitadAncho, cy + mitadAlto)
             close()
         }
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = inst.colorFondo ?: Color.parseColor("#FFF9C4")
         canvas.drawPath(path, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawPath(path, paintBorde)
+
+        paintTexto.color = inst.colorTexto ?: Color.BLACK
+        paintTexto.textSize = inst.tamLetra
         canvas.drawText(texto, cx, cy + mitadAlto + 15f, paintTexto)
-        Log.d(TAG, "Rombo dibujado: $texto @ y=$cy")
+
         return alto
     }
 
-    private fun dibujarFlechaVertical(canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float) {
+    private fun dibujarCirculo(
+        canvas: Canvas,
+        inst: Instrucciones,
+        texto: String,
+        cx: Float,
+        cy: Float
+    ): Float {
+        val radio = 70f
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = inst.colorFondo ?: Color.WHITE
+        canvas.drawCircle(cx, cy + radio, radio, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawCircle(cx, cy + radio, radio, paintBorde)
+
+        paintTexto.color = inst.colorTexto ?: Color.BLACK
+        paintTexto.textSize = inst.tamLetra
+        canvas.drawText(texto, cx, cy + radio + 15f, paintTexto)
+
+        return radio * 2
+    }
+
+    private fun dibujarRectanguloRedondeado(
+        canvas: Canvas,
+        inst: Instrucciones,
+        texto: String,
+        y: Float,
+        centroX: Float
+    ): Float {
+        val ancho = 360f
+        val alto = 100f
+        val left = centroX - ancho / 2
+        val rect = RectF(left, y, left + ancho, y + alto)
+
+        paintBorde.style = Paint.Style.FILL
+        paintBorde.color = inst.colorFondo ?: Color.WHITE
+        canvas.drawRoundRect(rect, 30f, 30f, paintBorde)
+
+        paintBorde.style = Paint.Style.STROKE
+        paintBorde.color = Color.BLACK
+        canvas.drawRoundRect(rect, 30f, 30f, paintBorde)
+
+        paintTexto.color = inst.colorTexto ?: Color.BLACK
+        paintTexto.textSize = inst.tamLetra
+        canvas.drawText(texto, centroX, y + alto * 0.62f, paintTexto)
+
+        return alto
+    }
+
+    private fun dibujarFlechaConTexto(
+        canvas: Canvas,
+        x1: Float, y1: Float,
+        x2: Float, y2: Float,
+        texto: String,
+        tamFlecha: Float = 20f
+    ) {
         canvas.drawLine(x1, y1, x2, y2, paintFlecha)
-        val tam = 24f
-        canvas.drawLine(x2, y2, x2 - tam, y2 - tam, paintFlecha)
-        canvas.drawLine(x2, y2, x2 + tam, y2 - tam, paintFlecha)
+
+        val dx = (x2 - x1).toDouble()
+        val dy = (y2 - y1).toDouble()
+        val angulo = Math.atan2(dy, dx).toFloat()
+
+        val cos = Math.cos(angulo.toDouble()).toFloat()
+        val sin = Math.sin(angulo.toDouble()).toFloat()
+
+        canvas.drawLine(
+            x2, y2,
+            x2 - tamFlecha * (cos * 0.8f - sin * 0.5f),
+            y2 - tamFlecha * (sin * 0.8f + cos * 0.5f),
+            paintFlecha
+        )
+        canvas.drawLine(
+            x2, y2,
+            x2 - tamFlecha * (cos * 0.8f + sin * 0.5f),
+            y2 - tamFlecha * (sin * 0.8f - cos * 0.5f),
+            paintFlecha
+        )
+
+        paintTextoCondicion.color = if (texto == "V") Color.GREEN else Color.RED
+        paintTextoCondicion.textSize = 24f
+        canvas.drawText(texto, (x1 + x2) / 2, (y1 + y2) / 2 - 10f, paintTextoCondicion)
+    }
+
+    private fun dibujarFlecha(
+        canvas: Canvas,
+        x1: Float, y1: Float,
+        x2: Float, y2: Float,
+        color: Int = Color.BLACK
+    ) {
+        paintFlecha.color = color
+        canvas.drawLine(x1, y1, x2, y2, paintFlecha)
+
+        // Punta de flecha
+        val dx = x2 - x1
+        val dy = y2 - y1
+        val longitud = 20f
+        val angulo = Math.atan2(dy.toDouble(), dx.toDouble()).toFloat()
+
+        canvas.drawLine(
+            x2, y2,
+            x2 - longitud * Math.cos(angulo - Math.PI / 6).toFloat(),
+            y2 - longitud * Math.sin(angulo - Math.PI / 6).toFloat(),
+            paintFlecha
+        )
+        canvas.drawLine(
+            x2, y2,
+            x2 - longitud * Math.cos(angulo + Math.PI / 6).toFloat(),
+            y2 - longitud * Math.sin(angulo + Math.PI / 6).toFloat(),
+            paintFlecha
+        )
+    }
+
+    private fun dibujarTextoFlecha(
+        canvas: Canvas,
+        texto: String,
+        x: Float,
+        y: Float,
+        color: Int = Color.BLACK
+    ) {
+        paintTextoCondicion.color = color
+        paintTextoCondicion.textSize = 28f
+        canvas.drawText(texto, x, y, paintTextoCondicion)
     }
 
     companion object {
-        private const val TAG = "DiagramaView_DEBUG"
+        private const val TAG = "DiagramaView"
     }
 }

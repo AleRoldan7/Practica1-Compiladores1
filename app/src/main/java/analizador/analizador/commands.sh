@@ -10,6 +10,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 LEXER_FILE="$SCRIPT_DIR/Lexer.flex"
 CUP_FILE="$SCRIPT_DIR/Parser.cup"
+LEXER_CONFIG_FILE="$SCRIPT_DIR/Config.flex"
 
 for file in "$JFLEX_JAR" "$CUP_JAR" "$LEXER_FILE" "$CUP_FILE"; do
     if [[ ! -f "$file" ]]; then
@@ -22,6 +23,12 @@ done
 echo ""
 echo "  → JFlex ...................................."
 java -jar "$JFLEX_JAR" "$LEXER_FILE"
+
+echo "→ Generando Lexer de configuración (%DEFAULT, %COLOR_SI, etc)..."
+echo "  Archivo: $LEXER_CONFIG_FILE"
+java -jar "$JFLEX_JAR" "$LEXER_CONFIG_FILE"
+echo "  Lexer de configuración generado ✓"
+echo ""
 
 echo ""
 echo "  → CUP ......................................"

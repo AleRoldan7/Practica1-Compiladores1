@@ -1,28 +1,17 @@
 package Modelo
 
+import configuracion.LetraFuente
+import configuracion.TipoFigura
 import java.io.Serializable
 
-sealed class Instrucciones : Serializable
 
-data class Declaracion(val variable: String, val valor: String) : Instrucciones()
+abstract class Instrucciones(open val indice : Int, open var colorTexto: Int? = null,
+                             open var colorFondo: Int? = null, open var figura: TipoFigura = TipoFigura.RECTANGULO,
+                             open var tipoLetra: LetraFuente = LetraFuente.ARIAL, open var tamLetra: Float = 36f) : Serializable {
 
-data class Mostrar(val texto: String) : Instrucciones()
 
-data class Leer(val variable: String) : Instrucciones()
-
-data class Si(val condicion: String) : Instrucciones()
-
-data class Mientras(val condicion: String) : Instrucciones()
-
-/*
-open class Instrucciones : Serializable {
-
-    open fun getTipo() : String {
-        return "Instruccion"
-    }
-
-    override fun toString(): String {
-        return getTipo()
-    }
+    open fun obtenerSubInstrucciones(): List<Instrucciones>? = null
 }
-*/
+
+
+

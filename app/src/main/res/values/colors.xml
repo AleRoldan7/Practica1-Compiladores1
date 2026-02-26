@@ -26,4 +26,13 @@
     <color name="report_success">#E8F5E9</color>
     <color name="md_theme_error">#B3261E</color>
 
+    <color name="celeste_claro">#40E0D0</color>
+    <color name="celeste_borde">#00CED1</color>
+    <color name="azul_boton">#4169E1</color>
+    <color name="verde_boton">#4CAF50</color>
+    <color name="amarillo_boton">#FFC107</color>
+    <color name="rojo_boton">#F44336</color>
+    <color name="resultado_fondo">#2F4F4F</color>
+    <color name="resultado_borde">#4682B4</color>
+
 </resources>

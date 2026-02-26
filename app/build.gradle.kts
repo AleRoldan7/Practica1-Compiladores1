@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -53,5 +54,6 @@ dependencies {
     // https://mvnrepository.com/artifact/com.itextpdf/itextpdf
     implementation("com.itextpdf:itextpdf:5.5.13.3")
 
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
 }
